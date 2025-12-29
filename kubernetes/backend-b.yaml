@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-b
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend-b
+  template:
+    metadata:
+      labels:
+        app: backend-b
+    spec:
+      containers:
+      - name: backend-b
+        image: gopalacrdeved7cc515.azurecr.io/backend-b:v1
+        ports:
+        - containerPort: 3002
+        env:
+        - name: PORT
+          value: "3002"
+        - name: DB_HOST
+          value: "gopal-psql-dev-eastus2.postgres.database.azure.com"
+        - name: DB_USER
+          value: "gopaladmin"
+        - name: DB_NAME
+          value: "gopaldb"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-b
+spec:
+  type: ClusterIP
+  selector:
+    app: backend-b
+  ports:
+  - port: 80
+    targetPort: 3002
