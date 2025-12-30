@@ -1,0 +1,64 @@
+name: App - QA Frontend (React → Web App)
+
+on:
+  # Manual trigger
+  workflow_dispatch:
+
+  # Optional: auto-deploy when frontend changes
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/frontend/**'
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AZURE_RESOURCE_GROUP_QA: Gopal-rg-qa-eastus2
+  AZURE_WEBAPP_NAME_QA:    Gopal-web-qa-centralus
+
+jobs:
+  deploy-frontend-qa:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        working-directory: src/frontend
+        run: npm ci
+
+      - name: Build React app
+        working-directory: src/frontend
+        run: npm run build
+
+      - name: Create deploy.zip (build + server.js + package.json)
+        working-directory: src/frontend
+        run: |
+          rm -f deploy.zip || true
+          zip -r deploy.zip build server.js package.json
+
+      - name: Deploy to QA Web App
+        working-directory: src/frontend
+        run: |
+          az webapp deploy \
+            --resource-group $AZURE_RESOURCE_GROUP_QA \
+            --name $AZURE_WEBAPP_NAME_QA \
+            --src-path ./deploy.zip \
+            --type zip \
+            --clean true \
+            --restart true \
+            --timeout 600

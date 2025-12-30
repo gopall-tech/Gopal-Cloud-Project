@@ -61,6 +61,7 @@ module "webapp" {
   plan_name           = "Gopal-asp-qa-centralus"
   app_name            = "Gopal-web-qa-centralus"
   apim_url            = module.apim.gateway_url
+  plan_sku            = "B1"
 }
 
 # 7. APIM Module (Gateway)
