@@ -33,6 +33,15 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
+    # --- NEW: Login to Azure using OIDC ---
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        client-id: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}
+        tenant-id: ${{ fromJson(secrets.AZURE_CREDENTIALS).tenantId }}
+        subscription-id: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
+    # --------------------------------------
+
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
 

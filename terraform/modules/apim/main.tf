@@ -6,6 +6,7 @@ resource "azurerm_api_management" "apim" {
   publisher_email     = var.publisher_email
   sku_name            = "Consumption_0" # Serverless Tier (Cheapest)
 }
+
 # 1. Define the API (Automates "Add API")
 resource "azurerm_api_management_api" "backend_api" {
   name                = "gopal-backend-api"
@@ -22,35 +23,7 @@ resource "azurerm_api_management_api" "backend_api" {
   subscription_required = false                 # Automates disabling "Subscription Required"
 }
 
-# 2. Define Policy (Automates CORS)
-resource "azurerm_api_management_api_policy" "api_policy" {
-  api_name            = azurerm_api_management_api.backend_api.name
-  api_management_name = azurerm_api_management.apim.name
-  resource_group_name = var.resource_group_name
-
-  xml_content = <<XML
-<policies>
-  <inbound>
-    <cors allow-credentials="true">
-      <allowed-origins>
-        <origin>https://gopal-web-${var.env}-centralus.azurewebsites.net</origin>
-        <origin>http://localhost:3000</origin>
-      </allowed-origins>
-      <allowed-methods>
-        <method>GET</method>
-        <method>POST</method>
-      </allowed-methods>
-      <allowed-headers>
-        <header>*</header>
-      </allowed-headers>
-    </cors>
-    <base />
-  </inbound>
-</policies>
-XML
-}
-
-# 3. Define Operations (Automates "Add Operation")
+# 2. Define Operations (Automates "Add Operation")
 resource "azurerm_api_management_api_operation" "get_a" {
   operation_id        = "get-backend-a"
   api_name            = azurerm_api_management_api.backend_api.name
@@ -91,6 +64,7 @@ resource "azurerm_api_management_api_operation" "upload_b" {
   url_template        = "/api/b/upload"
 }
 
+# 3. Define Global Policy (Automates CORS for EVERYTHING)
 resource "azurerm_api_management_policy" "global_policy" {
   api_management_id = azurerm_api_management.apim.id
   xml_content       = <<XML
@@ -98,7 +72,7 @@ resource "azurerm_api_management_policy" "global_policy" {
     <inbound>
         <cors allow-credentials="true">
             <allowed-origins>
-                <origin>${var.frontend_url}</origin>
+                <origin>https://gopal-web-${var.env}-centralus.azurewebsites.net</origin>
                 <origin>http://localhost:3000</origin>
             </allowed-origins>
             <allowed-methods>
