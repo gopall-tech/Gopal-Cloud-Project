@@ -68,7 +68,7 @@ module "webapp" {
 module "apim" {
   source              = "../../modules/apim"
   resource_group_name = azurerm_resource_group.rg.name
-  location            = var.location
+  location            = azurerm_resource_group.rg.location
 
   # --- RESTORED VARIABLES (You accidentally deleted these) ---
   env             = "qa"
