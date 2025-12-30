@@ -4,26 +4,23 @@ resource "azurerm_api_management" "apim" {
   resource_group_name = var.resource_group_name
   publisher_name      = var.publisher_name
   publisher_email     = var.publisher_email
-  sku_name            = "Consumption_0" # Serverless Tier (Cheapest)
+  sku_name            = "Consumption_0"
 }
 
-# 1. Define the API (Automates "Add API")
+# 1. Define the API
 resource "azurerm_api_management_api" "backend_api" {
-  name                = "gopal-backend-api"
-  resource_group_name = var.resource_group_name
-  api_management_name = azurerm_api_management.apim.name
-  revision            = "1"
-  display_name        = "Gopal Backend API"
-  path                = "v1"                    # Automates the "v1" suffix
-  protocols           = ["http", "https"]
-  
-  # Placeholder URL (The CI/CD pipeline will update this with the real Ingress IP later)
-  service_url         = "http://REPLACE_ME_INGRESS_IP" 
-
-  subscription_required = false                 # Automates disabling "Subscription Required"
+  name                  = "gopal-backend-api"
+  resource_group_name   = var.resource_group_name
+  api_management_name   = azurerm_api_management.apim.name
+  revision              = "1"
+  display_name          = "Gopal Backend API"
+  path                  = "v1"
+  protocols             = ["http", "https"]
+  service_url           = "http://REPLACE_ME_INGRESS_IP"
+  subscription_required = false
 }
 
-# 2. Define Operations (Automates "Add Operation")
+# 2. Define Operations
 resource "azurerm_api_management_api_operation" "get_a" {
   operation_id        = "get-backend-a"
   api_name            = azurerm_api_management_api.backend_api.name
@@ -64,7 +61,7 @@ resource "azurerm_api_management_api_operation" "upload_b" {
   url_template        = "/api/b/upload"
 }
 
-# 3. Define Global Policy (Automates CORS for EVERYTHING)
+# 3. GLOBAL POLICY (Corrected)
 resource "azurerm_api_management_policy" "global_policy" {
   api_management_id = azurerm_api_management.apim.id
   xml_content       = <<XML
@@ -83,20 +80,19 @@ resource "azurerm_api_management_policy" "global_policy" {
                 <method>DELETE</method>
             </allowed-methods>
             <allowed-headers>
-                <header>*</header>
+                <header>Content-Type</header>
+                <header>Authorization</header>
+                <header>Accept</header>
+                <header>Origin</header>
+                <header>X-Requested-With</header>
             </allowed-headers>
         </cors>
-        <base />
     </inbound>
     <backend>
-        <base />
+        <forward-request />
     </backend>
-    <outbound>
-        <base />
-    </outbound>
-    <on-error>
-        <base />
-    </on-error>
+    <outbound />
+    <on-error />
 </policies>
 XML
 }
