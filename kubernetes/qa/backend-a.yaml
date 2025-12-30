@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-a
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend-a
+  template:
+    metadata:
+      labels:
+        app: backend-a
+    spec:
+      containers:
+      - name: backend-a
+        # Placeholder image; the script will update this to the real QA registry
+        image: REPLACE_WITH_QA_ACR_NAME.azurecr.io/backend-a:v1
+        ports:
+        - containerPort: 3001
+        env:
+        - name: PORT
+          value: "3001"
+        - name: DB_HOST
+          value: "gopal-psql-qa-eastus2.postgres.database.azure.com"
+        - name: DB_USER
+          value: "gopaladmin"
+        - name: DB_NAME
+          value: "gopaldb"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-a
+spec:
+  type: ClusterIP
+  selector:
+    app: backend-a
+  ports:
+  - port: 80
+    targetPort: 3001

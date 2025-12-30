@@ -1,5 +1,5 @@
-// src/db/ensureUploadsTable.js
-// Shared PostgreSQL pool + helper to ensure the `uploads` table exists.
+// src/backend-b/ensureUploadsTable.js
+// Ensure the `uploads` table exists in PostgreSQL for Backend B.
 
 const { Pool } = require('pg');
 
@@ -26,7 +26,7 @@ if (connectionString) {
 /**
  * Ensure the `uploads` table exists.
  *
- * @param {string} backendNameHint Optional backend name to log (e.g., "backend-a" or "backend-b")
+ * @param {string} backendNameHint Optional backend name to log (e.g., "backend-b")
  */
 async function ensureUploadsTable(backendNameHint) {
   const createTableSql = `
@@ -48,7 +48,7 @@ async function ensureUploadsTable(backendNameHint) {
   try {
     console.log(
       `Ensuring uploads table exists${
-        backendNameHint ? ` (backend ${backendNameHint})` : ''
+        backendNameHint ? ` (${backendNameHint})` : ''
       }...`
     );
     await pool.query(createTableSql);
@@ -60,41 +60,7 @@ async function ensureUploadsTable(backendNameHint) {
   }
 }
 
-/**
- * Optional helper to insert a row into `uploads`.
- *
- * @param {object} params
- * @param {string} params.backendName
- * @param {string} params.fileName
- * @param {number} [params.fileSize]
- * @param {string} [params.mimeType]
- * @returns {Promise<object>} inserted row
- */
-async function insertUploadRecord({ backendName, fileName, fileSize, mimeType }) {
-  const sql = `
-    INSERT INTO uploads (
-      backend_name,
-      file_name,
-      file_size,
-      mime_type
-    )
-    VALUES ($1, $2, $3, $4)
-    RETURNING *;
-  `;
-
-  const values = [
-    backendName,
-    fileName,
-    typeof fileSize === 'number' ? fileSize : null,
-    mimeType || null,
-  ];
-
-  const result = await pool.query(sql, values);
-  return result.rows[0];
-}
-
 module.exports = {
   pool,
   ensureUploadsTable,
-  insertUploadRecord,
 };
