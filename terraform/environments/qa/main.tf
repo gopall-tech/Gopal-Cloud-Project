@@ -25,8 +25,6 @@ module "aks" {
   cluster_name        = "Gopal-aks-qa-eastus2"
   dns_prefix          = "gopal-aks-qa"
   subnet_id           = module.network.aks_subnet_id
-  
-  # PASS THE ACR ID HERE
   acr_id              = module.acr.acr_id
 }
 
@@ -69,12 +67,13 @@ module "apim" {
   source              = "../../modules/apim"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
+  env                 = "qa"
+  apim_name           = "gopal-apim-qa-eastus2"
+  publisher_name      = "Gopal Walia"
+  publisher_email     = "Gopal.Walia@techconsulting.tech"
 
-  # --- RESTORED VARIABLES (You accidentally deleted these) ---
-  env             = "qa"
-  apim_name       = "gopal-apim-qa-eastus2"
-  publisher_name  = "Gopal Walia"
-  publisher_email = "Gopal.Walia@techconsulting.tech"
+  # ADD THIS LINE: Replace with the IP from 'kubectl get services --namespace ingress-basic'
+  ingress_ip          = "PASTE_YOUR_EXTERNAL_IP_HERE"
 }
 
 resource "random_id" "unique" {

@@ -16,7 +16,10 @@ resource "azurerm_api_management_api" "backend_api" {
   display_name          = "Gopal Backend API"
   path                  = "v1"
   protocols             = ["http", "https"]
-  service_url           = "http://REPLACE_ME_INGRESS_IP"
+  
+  # FIXED: Now uses the real IP address
+  service_url           = "http://${var.ingress_ip}"
+  
   subscription_required = false
 }
 
@@ -61,9 +64,7 @@ resource "azurerm_api_management_api_operation" "upload_b" {
   url_template        = "/api/b/upload"
 }
 
-# 3. GLOBAL POLICY (Corrected)
-# terraform/modules/apim/main.tf
-
+# 3. GLOBAL POLICY
 resource "azurerm_api_management_policy" "global_policy" {
   api_management_id = azurerm_api_management.apim.id
   xml_content       = <<XML
