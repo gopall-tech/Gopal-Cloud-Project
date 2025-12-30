@@ -62,6 +62,8 @@ resource "azurerm_api_management_api_operation" "upload_b" {
 }
 
 # 3. GLOBAL POLICY (Corrected)
+# terraform/modules/apim/main.tf
+
 resource "azurerm_api_management_policy" "global_policy" {
   api_management_id = azurerm_api_management.apim.id
   xml_content       = <<XML
