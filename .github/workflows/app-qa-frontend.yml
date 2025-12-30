@@ -18,6 +18,8 @@ permissions:
 env:
   AZURE_RESOURCE_GROUP_QA: Gopal-rg-qa-eastus2
   AZURE_WEBAPP_NAME_QA:    Gopal-web-qa-centralus
+  # Add this (Pointing to your QA APIM, not Dev):
+  REACT_APP_API_URL:       "https://gopal-apim-qa-eastus2.azure-api.net/v1/api"
 
 jobs:
   deploy-frontend-qa:
@@ -41,9 +43,12 @@ jobs:
         working-directory: src/frontend
         run: npm ci
 
-      - name: Build React app
-        working-directory: src/frontend
-        run: npm run build
+      - name: Build React App
+        run: |
+          npm ci
+          npm run build
+        env:
+          REACT_APP_API_URL: ${{ env.REACT_APP_API_URL }}
 
       - name: Create deploy.zip (build + server.js + package.json)
         working-directory: src/frontend

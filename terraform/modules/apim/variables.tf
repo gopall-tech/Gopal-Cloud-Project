@@ -6,3 +6,7 @@ variable "publisher_email" { type = string }
 variable "env" {
   type = string
 }
+variable "frontend_url" {
+  description = "The URL of the frontend allowed to call this API"
+  type        = string
+}

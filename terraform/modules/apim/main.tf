@@ -90,3 +90,39 @@ resource "azurerm_api_management_api_operation" "upload_b" {
   method              = "POST"
   url_template        = "/api/b/upload"
 }
+
+resource "azurerm_api_management_policy" "global_policy" {
+  api_management_id = azurerm_api_management.apim.id
+  xml_content       = <<XML
+<policies>
+    <inbound>
+        <cors allow-credentials="true">
+            <allowed-origins>
+                <origin>${var.frontend_url}</origin>
+                <origin>http://localhost:3000</origin>
+            </allowed-origins>
+            <allowed-methods>
+                <method>GET</method>
+                <method>POST</method>
+                <method>OPTIONS</method>
+                <method>PUT</method>
+                <method>DELETE</method>
+            </allowed-methods>
+            <allowed-headers>
+                <header>*</header>
+            </allowed-headers>
+        </cors>
+        <base />
+    </inbound>
+    <backend>
+        <base />
+    </backend>
+    <outbound>
+        <base />
+    </outbound>
+    <on-error>
+        <base />
+    </on-error>
+</policies>
+XML
+}

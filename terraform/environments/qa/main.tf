@@ -66,14 +66,13 @@ module "webapp" {
 
 # 7. APIM Module (Gateway)
 module "apim" {
-  source = "../../modules/apim"
-
+  source              = "../../modules/apim"
   resource_group_name = azurerm_resource_group.rg.name
-  location            = azurerm_resource_group.rg.location
-  apim_name           = "Gopal-apim-qa-eastus2"
-  publisher_name      = "Gopal Tech"
-  publisher_email     = "admin@gopal.tech"
-  env                 = "qa"
+  location            = var.location
+  # ... other existing variables ...
+  
+  # ADD THIS LINE:
+  frontend_url        = "https://Gopal-web-qa-centralus.azurewebsites.net"
 }
 
 resource "random_id" "unique" {
