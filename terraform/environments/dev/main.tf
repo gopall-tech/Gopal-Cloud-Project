@@ -22,8 +22,8 @@ module "aks" {
 
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
-  cluster_name        = "Gopal-aks-qa-eastus2"
-  dns_prefix          = "gopal-aks-qa"
+  cluster_name        = "Gopal-aks-dev-eastus2"
+  dns_prefix          = "gopal-aks-dev"
   subnet_id           = module.network.aks_subnet_id
   
   # PASS THE ACR ID HERE
@@ -74,6 +74,7 @@ module "apim" {
   publisher_name      = "Gopal Tech"
   publisher_email     = "admin@gopal.tech"
   env                 = "dev"
+  ingress_ip          = "PASTE_YOUR_EXTERNAL_IP_HERE"
 }
 
 # Helper to generate unique ACR name

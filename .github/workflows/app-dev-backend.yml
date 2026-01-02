@@ -1,0 +1,92 @@
+name: Deploy Backend DEV
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/backend-a/**'
+      - 'k8s/**'
+      - '.github/workflows/app-dev-backend.yml'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get ACR credentials
+        id: acr
+        run: |
+          ACR_NAME=$(az acr list --resource-group Gopal-rg-dev-eastus2 --query "[0].name" -o tsv)
+          ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query loginServer -o tsv)
+          echo "name=$ACR_NAME" >> $GITHUB_OUTPUT
+          echo "login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        run: |
+          az acr build \
+            --registry ${{ steps.acr.outputs.name }} \
+            --image backend-a:${{ github.sha }} \
+            --image backend-a:latest \
+            --file src/backend-a/Dockerfile \
+            src/backend-a
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group Gopal-rg-dev-eastus2 \
+            --name Gopal-aks-dev-eastus2 \
+            --overwrite-existing
+
+      - name: Get Database connection string from Key Vault
+        id: db
+        run: |
+          KV_NAME=$(az keyvault list --resource-group Gopal-rg-dev-eastus2 --query "[0].name" -o tsv)
+          DB_URL=$(az keyvault secret show --vault-name $KV_NAME --name db-connection-string --query value -o tsv)
+          echo "::add-mask::$DB_URL"
+          echo "connection_string=$DB_URL" >> $GITHUB_OUTPUT
+
+      - name: Create Kubernetes secret for database
+        run: |
+          kubectl create secret generic db-connection \
+            --from-literal=connection-string="${{ steps.db.outputs.connection_string }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy to AKS
+        run: |
+          export ACR_LOGIN_SERVER=${{ steps.acr.outputs.login_server }}
+          export IMAGE_TAG=${{ github.sha }}
+
+          envsubst < k8s/backend-a-deployment.yaml | kubectl apply -f -
+
+      - name: Wait for deployment
+        run: |
+          kubectl rollout status deployment/backend-a --timeout=5m
+
+      - name: Get Ingress IP
+        run: |
+          echo "Waiting for Ingress IP..."
+          for i in {1..30}; do
+            INGRESS_IP=$(kubectl get service -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+            if [ -n "$INGRESS_IP" ]; then
+              echo "Ingress IP: $INGRESS_IP"
+              break
+            fi
+            echo "Attempt $i/30: No IP yet, waiting..."
+            sleep 10
+          done
