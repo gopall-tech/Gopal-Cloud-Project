@@ -73,6 +73,7 @@ resource "azurerm_api_management_policy" "global_policy" {
         <cors allow-credentials="true">
             <allowed-origins>
                 <origin>https://gopal-web-${var.env}-centralus.azurewebsites.net</origin>
+                <origin>http://gopal-web-${var.env}-centralus.azurewebsites.net</origin>
                 <origin>http://localhost:3000</origin>
             </allowed-origins>
             <allowed-methods>
