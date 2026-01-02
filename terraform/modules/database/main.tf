@@ -60,13 +60,18 @@ resource "azurerm_key_vault" "kv" {
   tenant_id           = data.azurerm_client_config.current.tenant_id
   sku_name            = "standard"
 
+  # Enable soft delete and purge protection
+  soft_delete_retention_days = 7
+  purge_protection_enabled   = false
+
+  # Allow current client (Terraform/GitHub Actions SP) full access
   access_policy {
     tenant_id = data.azurerm_client_config.current.tenant_id
     object_id = data.azurerm_client_config.current.object_id
-    secret_permissions = ["Get", "List", "Set", "Delete", "Purge"]
+    secret_permissions = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
   }
 
-  # Allow AKS to read the password
+  # Allow AKS to read secrets
   access_policy {
     tenant_id = data.azurerm_client_config.current.tenant_id
     object_id = var.aks_kubelet_object_id
@@ -77,5 +82,12 @@ resource "azurerm_key_vault" "kv" {
 resource "azurerm_key_vault_secret" "db_pass" {
   name         = "db-admin-password"
   value        = random_password.pass.result
+  key_vault_id = azurerm_key_vault.kv.id
+}
+
+# Full connection string for backend apps
+resource "azurerm_key_vault_secret" "db_connection_string" {
+  name         = "db-connection-string"
+  value        = "postgresql://gopaladmin:${random_password.pass.result}@${azurerm_postgresql_flexible_server.psql.fqdn}:5432/gopaldb?sslmode=require"
   key_vault_id = azurerm_key_vault.kv.id
 }
